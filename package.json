@@ -1,0 +1,66 @@
+{
+    "name": "ts-template",
+    "version": "0.1.0",
+    "type": "module",
+    "description": "TypeScript project template initializer. Like npm init, but for TS. Includes robust configuration for tsconfig.",
+    "main": "./dist/cjs/index.js",
+    "module": "./dist/esm/index.js",
+    "types": "./dist/types/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/types/index.d.ts",
+            "import": "./dist/esm/index.js",
+            "require": "./dist/cjs/index.js"
+        }
+    },
+    "scripts": {
+        "clean": "rimraf dist coverage tests/compiled",
+        "build": "pnpm clean && pnpm build:esm && pnpm build:cjs",
+        "build:esm": "rimraf dist/esm dist/types && pnpm tsc -p tsconfig.json",
+        "build:cjs": "rimraf dist/cjs && tsc -p tsconfig.cjs.json && echo '{\"type\": \"commonjs\"}' > ./dist/cjs/package.json"
+    },
+    "license": "UNLICENSED",
+    "contributors": [
+        {
+            "name": "Bryan Nonni",
+            "url": "https://github.com/bnonni"
+        }
+    ],
+    "homepage": "https://github.com/bnonni/ts-template",
+    "bugs": {
+        "url": "https://github.com/bnonni/ts-template/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+ssh://git@github.com:bnonni/ts-template.git"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "dependencies": {
+        "@bnonni/logger": "^0.2.0",
+        "@inquirer/prompts": "^7.3.1"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.20.0",
+        "@types/eslint": "^9.6.1",
+        "@types/eslint-plugin-mocha": "^10.4.0",
+        "@types/node": "^22.13.2",
+        "@typescript-eslint/eslint-plugin": "^8.24.0",
+        "@typescript-eslint/parser": "^8.24.0",
+        "esbuild": "^0.25.0",
+        "eslint": "^9.20.1",
+        "eslint-plugin-mocha": "^10.5.0",
+        "globals": "^15.15.0",
+        "rimraf": "^6.0.1",
+        "typescript": "^5.7.3"
+    },
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "esbuild"
+        ]
+    }
+}
