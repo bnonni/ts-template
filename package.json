@@ -1,6 +1,6 @@
 {
     "name": "init-ts-template",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "type": "module",
     "description": "TypeScript project template initializer. Like npm init, but for TS. Includes robust configuration for tsconfig.",
     "main": "./dist/cjs/index.js",
