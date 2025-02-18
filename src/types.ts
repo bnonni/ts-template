@@ -19,6 +19,13 @@ export type TsConfig = Record<string, unknown> & {
   exclude: string[];
 };
 
+export type Contributor = {
+  [key: string | number | symbol]: any
+  name: string;
+  url: string;
+  email?: string;
+};
+
 export type PackageInitOptions = {
     name?: string;
     version?: string;
@@ -28,8 +35,8 @@ export type PackageInitOptions = {
     src?: boolean;
     type?: string;
     homepage?: string;
-    bugs?: { url: string };
-    contributors?: { name: string; url: string }[]
+    bugs?: string;
+    contributors?: Contributor[]
     keywords?: string[];
     tsconfig?: TsConfig;
 };

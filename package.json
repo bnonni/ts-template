@@ -6,6 +6,7 @@
     "main": "./dist/cjs/index.js",
     "module": "./dist/esm/index.js",
     "types": "./dist/types/index.d.ts",
+    "bin": "./dist/cjs/init-ts-template.js",
     "exports": {
         ".": {
             "types": "./dist/types/index.d.ts",
@@ -22,14 +23,13 @@
     "license": "UNLICENSED",
     "contributors": [
         {
-            "name": "Bryan Nonni",
-            "url": "https://github.com/bnonni"
+            "name": "Bryan",
+            "url": "https://github.com/bnonni",
+            "email": "github@nonni.dev"
         }
     ],
     "homepage": "https://github.com/bnonni/ts-template",
-    "bugs": {
-        "url": "https://github.com/bnonni/ts-template/issues"
-    },
+    "bugs": "https://github.com/bnonni/ts-template/issues",
     "repository": {
         "type": "git",
         "url": "git+ssh://git@github.com:bnonni/ts-template.git"
@@ -42,7 +42,8 @@
     },
     "dependencies": {
         "@bnonni/logger": "^0.2.0",
-        "@inquirer/prompts": "^7.3.1"
+        "@inquirer/prompts": "^7.3.1",
+        "commander": "^13.1.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.20.0",

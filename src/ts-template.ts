@@ -1,12 +1,20 @@
 
 import * as Inquirer from '@inquirer/prompts';
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, writeFile, readFile } from 'fs/promises';
 import Logger from '@bnonni/logger';
-import { TsConfig, PackageInitOptions } from './type.js';
+import { TsConfig, PackageInitOptions } from './types.js';
 import { DEFAULT_TS_CONFIG } from './constants.js';
-import { url } from 'inspector';
 
 class TsTemplate {
+  static async getGitConfigUser() {
+    const gitconfig = await readFile(`${process.env.HOME}/.gitconfig`, 'utf-8');
+    const gitconfigUserEmail = gitconfig.match(/(email = .*)/g)?.[0] ?? 'email =';
+    const gitconfigUserName = gitconfig.match(/(name = .*)/g)?.[0] ?? 'name =';
+    const useremail = gitconfigUserEmail.split('=')[1] ?? '';
+    const username = gitconfigUserName.split('=')[1] ?? '';
+    return { useremail, username };
+  }
+
   static async buildConfig(options: TsConfig) {
     const compilerOptions = options?.compilerOptions ?? DEFAULT_TS_CONFIG.compilerOptions;
 
@@ -158,7 +166,7 @@ class TsTemplate {
     keywords,
     tsconfig = DEFAULT_TS_CONFIG,
   }: PackageInitOptions = {}) {
-    Logger.info('Welcome to the DRPM DPK template wizard!');
+    Logger.info('Welcome to the init-ts-template');
     try {
       tsconfig ??= JSON.parse(tsconfig);
     } catch (error: any) {
@@ -166,10 +174,14 @@ class TsTemplate {
       Logger.warn('PackageCommand: Failed to parse tsconfig from CLI, using default');
     }
 
+    if(name) {
+      Logger.info(`Creating new TypeScript package: ${name}`);
+    }
+
     name ??= await Inquirer.input({
-      message     : 'DPK Name:',
+      message     : 'Package Name:',
       required    : true,
-      default     : 'my-dpk',
+      default     : 'my-package',
       transformer : (value) => value.replace('@drpm', '')
     });
 
@@ -182,8 +194,17 @@ class TsTemplate {
     description ??= await Inquirer.input({
       message  : 'Description:',
       required : true,
-      default  : 'My Decentralized Package'
+      default  : 'My Cool Package'
     });
+
+    const packageManager = await Inquirer.select({
+      message : 'Package Manager:',
+      choices : ['npm', 'yarn', 'pnpm'],
+    });
+
+    const tsConfigTemplate = esm
+      ? await this.buildConfig(tsconfig)
+      : undefined;
 
     license ??= await Inquirer.input({
       message  : 'License:',
@@ -209,7 +230,8 @@ class TsTemplate {
 
     type ??= await Inquirer.select({
       message : 'Build type:',
-      choices : ['commonjs', 'module'],
+      choices : ['module', 'commonjs'],
+      default : 'module'
     });
 
     homepage ??= await Inquirer.input({
@@ -226,16 +248,43 @@ class TsTemplate {
       }.git`
     };
 
-    const bugs = { url: `${homepage}/issues` };
+    const bugs = `${homepage}/issues`;
 
-    const tsConfigTemplate = esm
-      ? await this.buildConfig(tsconfig)
-      : undefined;
-
-    const packageManager = await Inquirer.select({
-      message : 'Package Manager:',
-      choices : ['npm', 'yarn', 'pnpm'],
+    contributors ??= [];
+    const { useremail, username } = await this.getGitConfigUser();
+    const numContributors = await Inquirer.input({
+      message : 'Number of contributors:',
+      default : '1',
     });
+    while (contributors.length < Number(numContributors)) {
+      const name = await Inquirer.input({
+        message : `Contributor ${contributors.length + 1} Name:`,
+        default : username,
+      });
+      const email = await Inquirer.input({
+        message : `Contributor ${contributors.length + 1} Email:`,
+        default : useremail
+      });
+      const url = await Inquirer.input({
+        message : `Contributor ${contributors.length + 1} URL:`,
+        default : `https://github.com/${username}`
+      });
+      contributors.push({ name, email, url });
+    }
+
+    const addKeywords = await Inquirer.select({
+      message : 'Add keywords?',
+      choices : ['Yes', 'No'],
+    });
+    keywords ??= [name];
+    while(addKeywords === 'Yes') {
+      const keyword = await Inquirer.input({
+        message  : 'Keyword (leave blank to skip):',
+        required : true,
+      });
+      if(!keyword) break;
+      keywords.push(keyword);
+    }
 
     const pasckageJsonContent = {
       name,
@@ -285,7 +334,7 @@ class TsTemplate {
       await writeFile(`${name}/tsconfig.json`, JSON.stringify(tsConfigTemplate, null, 2));
       Logger.log('Generated tsconfig.json');
     }
-    Logger.log(`New TS project ${pasckageJsonContent.name} created successfully!`);
+    Logger.log(`New TS template project ${pasckageJsonContent.name} created successfully!`);
   }
 }
 
