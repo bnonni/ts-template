@@ -279,8 +279,7 @@ class TsTemplate {
     keywords ??= [name];
     while(addKeywords === 'Yes') {
       const keyword = await Inquirer.input({
-        message  : 'Keyword (leave blank to skip):',
-        required : true,
+        message : 'Keyword (press enter to skip):',
       });
       if(!keyword) break;
       keywords.push(keyword);
