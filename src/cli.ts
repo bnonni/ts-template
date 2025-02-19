@@ -7,5 +7,6 @@ program
   .version(`init-ts-template ${pkg.version}`, '-v, --version', 'Output the current version.')
   .description('TypeScript project template initializer with support for tsconfig.')
   .option('-n, --name <name>', 'Package name.')
+  .option('-v, --version <version>', 'Package version.')
   .action(async (options: any) => await TsTemplate.init(options))
   .parse();

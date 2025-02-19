@@ -13,7 +13,7 @@ export type CompilerOptions = {
   outDir: string;
 }
 
-export type TsConfig = Record<string, unknown> & {
+export type TsConfig = {
   compilerOptions: CompilerOptions;
   include: string[];
   exclude: string[];
@@ -38,5 +38,24 @@ export type PackageInitOptions = {
     bugs?: string;
     contributors?: Contributor[]
     keywords?: string[];
-    tsconfig?: TsConfig;
+    tsconfig?: string | TsConfig;
 };
+
+export const DEFAULT_TS_CONFIG = {
+  compilerOptions : {
+    target            : 'ES5',
+    module            : 'CommonJS',
+    moduleResolution  : 'Node',
+    strict            : true,
+    declaration       : true,
+    declarationMap    : true,
+    sourceMap         : true,
+    esModuleInterop   : true,
+    resolveJsonModule : true,
+    skipLibCheck      : true,
+    declarationDir    : 'dist/types',
+    outDir            : 'dist',
+  },
+  include : ['src'],
+  exclude : ['node_modules']
+} as TsConfig;

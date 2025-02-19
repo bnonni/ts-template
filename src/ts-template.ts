@@ -1,9 +1,10 @@
 
 import * as Inquirer from '@inquirer/prompts';
-import { mkdir, writeFile, readFile } from 'fs/promises';
+import { mkdir, writeFile, readFile, stat } from 'fs/promises';
 import Logger from '@bnonni/logger';
 import { TsConfig, PackageInitOptions } from './types.js';
-import { DEFAULT_TS_CONFIG } from './constants.js';
+import { DEFAULT_TS_CONFIG } from './types.js';
+import { basename, extname } from 'path';
 
 class TsTemplate {
   static async getGitConfigUser() {
@@ -15,10 +16,8 @@ class TsTemplate {
     return { useremail, username };
   }
 
-  static async buildConfig(options: TsConfig) {
-    const compilerOptions = options?.compilerOptions ?? DEFAULT_TS_CONFIG.compilerOptions;
-
-    Logger.log('---------- tsconfig.json setup ----------');
+  static async buildTsConfig(tsconfig: TsConfig) {
+    Logger.log('---------- build tsconfig.json ----------');
 
     let useDefaults;
     do {
@@ -35,7 +34,7 @@ class TsTemplate {
       }
     } while (useDefaults === 'Show defaults');
 
-    compilerOptions.target = await Inquirer.select({
+    tsconfig.compilerOptions.target = await Inquirer.select({
       message : 'Compiler Option: target',
       choices : [
         'ES5',
@@ -51,10 +50,10 @@ class TsTemplate {
         'ES2023',
         'ESNext',
       ],
-      default : compilerOptions.target,
+      default : tsconfig.compilerOptions.target,
     });
 
-    compilerOptions.module = await Inquirer.select({
+    tsconfig.compilerOptions.module = await Inquirer.select({
       message : 'Compiler Option: module',
       choices : [
         'CommonJS',
@@ -66,12 +65,12 @@ class TsTemplate {
         'Node16',
         'NodeNext'
       ],
-      default : compilerOptions.target === 'ES5'
-        ? compilerOptions.module
+      default : tsconfig.compilerOptions.target === 'ES5'
+        ? tsconfig.compilerOptions.module
         : 'ES2015',
     });
 
-    compilerOptions.moduleResolution = await Inquirer.select({
+    tsconfig.compilerOptions.moduleResolution = await Inquirer.select({
       message : 'Compiler Option: moduleResolution',
       choices : [
         'Classic',
@@ -81,76 +80,113 @@ class TsTemplate {
         'NodeNext',
         'Bundler',
       ],
-      default : ['ES6', 'ES2015'].includes(compilerOptions.module)
+      default : ['ES6', 'ES2015'].includes(tsconfig.compilerOptions.module)
         ? 'Classic'
-        : ['Node16', 'NodeNext'].includes(compilerOptions.module)
-          ? compilerOptions.module
+        : ['Node16', 'NodeNext'].includes(tsconfig.compilerOptions.module)
+          ? tsconfig.compilerOptions.module
           : 'Node'
     });
 
-    compilerOptions.strict = await Inquirer.select({
+    tsconfig.compilerOptions.strict = await Inquirer.select({
       message : 'Compiler Option: enable strict mode?',
       choices : ['Yes', 'No'],
       default : 'Yes',
     }) === 'Yes';
 
-    compilerOptions.declaration = await Inquirer.select({
+    tsconfig.compilerOptions.declaration = await Inquirer.select({
       message : 'Compiler Option: Generate declaration files?',
       choices : ['Yes', 'No'],
       default : 'Yes',
     }) === 'Yes';
 
-    compilerOptions.declarationMap = await Inquirer.select({
+    tsconfig.compilerOptions.declarationMap = await Inquirer.select({
       message : 'Compiler Option: Generate declaration map files?',
       choices : ['Yes', 'No'],
       default : 'Yes',
     }) === 'Yes';
 
-    compilerOptions.sourceMap = await Inquirer.select({
+    tsconfig.compilerOptions.sourceMap = await Inquirer.select({
       message : 'Compiler Option: Generate source map files?',
       choices : ['Yes', 'No'],
       default : 'Yes',
     }) === 'Yes';
 
-    compilerOptions.esModuleInterop = await Inquirer.select({
+    tsconfig.compilerOptions.esModuleInterop = await Inquirer.select({
       message : 'Compiler Option: esModuleInterop?',
       choices : ['Yes', 'No'],
       default : 'Yes',
     }) === 'Yes';
 
-    compilerOptions.resolveJsonModule = await Inquirer.select({
+    tsconfig.compilerOptions.resolveJsonModule = await Inquirer.select({
       message : 'Compiler Option: resolveJsonModule?',
       choices : ['Yes', 'No'],
       default : 'Yes',
     }) === 'Yes';
 
-    compilerOptions.skipLibCheck = await Inquirer.select({
+    tsconfig.compilerOptions.skipLibCheck = await Inquirer.select({
       message : 'Compiler Option: skipLibCheck?',
       choices : ['Yes', 'No'],
       default : 'Yes',
     }) === 'Yes';
 
-    compilerOptions.declarationDir = await Inquirer.input({
+    tsconfig.compilerOptions.declarationDir = await Inquirer.input({
       message : 'Compiler Option: declarationDir',
-      default : compilerOptions.declarationDir,
+      default : tsconfig.compilerOptions.declarationDir,
     });
 
-    compilerOptions.outDir = await Inquirer.input({
+    tsconfig.compilerOptions.outDir = await Inquirer.input({
       message : 'Compiler Option: outDir',
-      default : compilerOptions.outDir,
+      default : tsconfig.compilerOptions.outDir,
     });
 
-    DEFAULT_TS_CONFIG.exclude = options.exclude ?? await Inquirer.input({
+    tsconfig.exclude = tsconfig.exclude ?? await Inquirer.input({
       message : 'TSConfig Option: exclude',
       default : `[${DEFAULT_TS_CONFIG.exclude.join(', ')}]`,
     });
 
-    DEFAULT_TS_CONFIG.include = options.include ?? await Inquirer.input({
+    tsconfig.include = tsconfig.include ?? await Inquirer.input({
       message : 'TSConfig Option: exclude',
       default : `[${DEFAULT_TS_CONFIG.include.join(', ')}]`,
     });
 
-    return DEFAULT_TS_CONFIG;
+    return tsconfig;
+  }
+
+  static parsable(str: string): boolean {
+    try {
+      JSON.parse(str);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  static async isValidTsConfigFile(filePath: string): Promise<boolean> {
+    if (!filePath || typeof filePath !== 'string' || basename(filePath).includes('\0')) {
+      return false;
+    }
+
+    if (extname(filePath) !== '.json') {
+      return false;
+    }
+
+    try {
+      return (await stat(filePath)).isFile();
+    } catch {
+      return false;
+    }
+  }
+
+  static async loadTsConfig(tsconfig?: string): Promise<TsConfig> {
+    if(!tsconfig) return DEFAULT_TS_CONFIG;
+    try {
+      const data = this.parsable(tsconfig)
+        ? JSON.parse(await readFile(tsconfig, 'utf-8'))
+        : tsconfig;
+      return JSON.parse(data) as TsConfig;
+    } catch (error: any) {
+      throw new Error(`Failed to load tsconfig from file, using default: ${error.message}`);
+    }
   }
 
   static async init({
@@ -164,25 +200,18 @@ class TsTemplate {
     homepage,
     contributors,
     keywords,
-    tsconfig = DEFAULT_TS_CONFIG,
+    tsconfig,
   }: PackageInitOptions = {}) {
     Logger.info('Welcome to the init-ts-template');
-    try {
-      tsconfig ??= JSON.parse(tsconfig);
-    } catch (error: any) {
-      Logger.error(error.message);
-      Logger.warn('PackageCommand: Failed to parse tsconfig from CLI, using default');
-    }
-
-    if(name) {
-      Logger.info(`Creating new TypeScript package: ${name}`);
-    }
+    tsconfig = await this.loadTsConfig(tsconfig as string);
 
     name ??= await Inquirer.input({
       message     : 'Package Name:',
       required    : true,
       default     : 'my-package'
     });
+
+    Logger.info(`Creating new TypeScript project: ${name}`);
 
     version ??= await Inquirer.input({
       message  : 'Version:',
@@ -193,12 +222,13 @@ class TsTemplate {
     description ??= await Inquirer.input({
       message  : 'Description:',
       required : true,
-      default  : 'My Cool Package'
+      default  : 'My TS Package'
     });
 
     const packageManager = await Inquirer.select({
       message : 'Package Manager:',
       choices : ['npm', 'yarn', 'pnpm'],
+      default : 'pnpm'
     });
 
     esm ??= await Inquirer.select({
@@ -208,7 +238,7 @@ class TsTemplate {
     }) === 'Yes';
 
     const tsConfigTemplate = esm
-      ? await this.buildConfig(tsconfig)
+      ? await this.buildTsConfig(tsconfig)
       : undefined;
 
     src ??= await Inquirer.select({

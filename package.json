@@ -6,7 +6,7 @@
     "main": "./dist/cjs/index.js",
     "module": "./dist/esm/index.js",
     "types": "./dist/types/index.d.ts",
-    "bin": "./dist/cjs/init-ts-template.js",
+    "bin": "./dist/cjs/cli.js",
     "exports": {
         ".": {
             "types": "./dist/types/index.d.ts",
@@ -28,11 +28,11 @@
             "email": "github@nonni.dev"
         }
     ],
-    "homepage": "https://github.com/bnonni/ts-template",
-    "bugs": "https://github.com/bnonni/ts-template/issues",
+    "homepage": "https://github.com/bnonni/init-ts-template",
+    "bugs": "https://github.com/bnonni/init-ts-template/issues",
     "repository": {
         "type": "git",
-        "url": "git+ssh://git@github.com:bnonni/ts-template.git"
+        "url": "git+ssh://git@github.com:bnonni/init-ts-template.git"
     },
     "publishConfig": {
         "access": "public"
