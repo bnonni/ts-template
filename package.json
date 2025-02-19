@@ -18,7 +18,8 @@
         "clean": "rimraf dist coverage tests/compiled",
         "build": "pnpm clean && pnpm build:esm && pnpm build:cjs",
         "build:esm": "rimraf dist/esm dist/types && pnpm tsc -p tsconfig.json",
-        "build:cjs": "rimraf dist/cjs && tsc -p tsconfig.cjs.json && echo '{\"type\": \"commonjs\"}' > ./dist/cjs/package.json"
+        "build:cjs": "rimraf dist/cjs && tsc -p tsconfig.cjs.json && echo '{\"type\": \"commonjs\"}' > ./dist/cjs/package.json",
+        "prepublish": "pnpm build"
     },
     "license": "UNLICENSED",
     "contributors": [
