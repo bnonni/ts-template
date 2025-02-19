@@ -181,8 +181,7 @@ class TsTemplate {
     name ??= await Inquirer.input({
       message     : 'Package Name:',
       required    : true,
-      default     : 'my-package',
-      transformer : (value) => value.replace('@drpm', '')
+      default     : 'my-package'
     });
 
     version ??= await Inquirer.input({
@@ -202,15 +201,15 @@ class TsTemplate {
       choices : ['npm', 'yarn', 'pnpm'],
     });
 
+    esm ??= await Inquirer.select({
+      message : 'Default ESM?',
+      choices : ['Yes', 'No'],
+      default : 'Yes'
+    }) === 'Yes';
+
     const tsConfigTemplate = esm
       ? await this.buildConfig(tsconfig)
       : undefined;
-
-    license ??= await Inquirer.input({
-      message  : 'License:',
-      required : true,
-      default  : 'UNLICENSED'
-    });
 
     src ??= await Inquirer.select({
       message : 'Use src/ directory?',
@@ -218,11 +217,11 @@ class TsTemplate {
       default : 'Yes'
     }) === 'Yes';
 
-    esm ??= await Inquirer.select({
-      message : 'Default ESM?',
-      choices : ['Yes', 'No'],
-      default : 'Yes'
-    }) === 'Yes';
+    license ??= await Inquirer.input({
+      message  : 'License:',
+      required : true,
+      default  : 'UNLICENSED'
+    });
 
     const main ='./dist/cjs/index.js';
     const module = './dist/esm/index.js';
@@ -293,10 +292,6 @@ class TsTemplate {
       main,
       module,
       types,
-      license,
-      homepage,
-      respository,
-      bugs,
       exports : {
         '.' : {
           types,
@@ -304,6 +299,10 @@ class TsTemplate {
           require : main
         }
       },
+      license,
+      homepage,
+      respository,
+      bugs,
       publishConfig : { access: 'public' },
       engines       : { node: '>=22.0.0' },
       dependencies  : {  },
@@ -324,10 +323,6 @@ class TsTemplate {
     // Write package.json to disk
     await writeFile(`${name}/package.json`, JSON.stringify(pasckageJsonContent, null, 2));
     Logger.log('Generated package.json');
-
-    // Create a custom .npmrc file with settings
-    await writeFile(`${name}/.npmrc`, '');
-    Logger.log('Generated blank .npmrc');
 
     if (tsConfigTemplate) {
       await writeFile(`${name}/tsconfig.json`, JSON.stringify(tsConfigTemplate, null, 2));
