@@ -206,9 +206,9 @@ class TsTemplate {
     tsconfig = await this.loadTsConfig(tsconfig as string);
 
     name ??= await Inquirer.input({
-      message     : 'Package Name:',
+      message     : 'Project Name:',
       required    : true,
-      default     : 'my-package'
+      default     : 'my-ts-project'
     });
 
     Logger.info(`Creating new TypeScript project: ${name}`);
@@ -222,7 +222,7 @@ class TsTemplate {
     description ??= await Inquirer.input({
       message  : 'Description:',
       required : true,
-      default  : 'My TS Package'
+      default  : 'My TS Project'
     });
 
     const packageManager = await Inquirer.select({
